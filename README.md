@@ -1,4 +1,4 @@
-# gsbatch
+# Helpers for batching analysis of google bucket files
 Python classes to help with batching functions over data that is obtained
 from google buckets using gsutil. 
 
