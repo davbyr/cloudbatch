@@ -11,7 +11,9 @@ class Gsbatch():
                  gs_list = None, 
                  gs_components = None,
                  gs_dir = None,
-                 search = 'remote',
+                 get_dir = None,
+                 put_dir = None,
+                 source = 'remote',
                  batch_size=10
                 ):
 
@@ -31,7 +33,7 @@ class Gsbatch():
             gs_files = [path.join(gs_dir, fn) for fn in gs_files]
             
         # Check for wildcards
-        gs_files = self._expand_wildcards(gs_files, search)
+        gs_files = self._expand_wildcards(gs_files, source)
         
         # Initialise batches
         self.current_file = 0
@@ -48,8 +50,10 @@ class Gsbatch():
         self.last_batch_size = last_batch_size
         self.batch_size = batch_size
         self.is_last_batch = False
-        self.search = search
+        self.source = source
         self.tmp_files = []
+        self.get_dir = get_dir
+        self.put_dir = put_dir
         
         self._update_batch() 
         
@@ -77,31 +81,32 @@ class Gsbatch():
         self._update_batch()
         return
     
-    def get_batch(self, get_dir):  
+    def get_batch(self):  
         
         # Create get command using gsutil and run from command line
         get_cmd = 'gsutil -m cp '
         for ff in self.gs_files_batch:
             get_cmd = get_cmd + f' {ff}'
-        get_cmd += f' {get_dir}'
-        print(get_cmd)
-        subprocess.run(get_cmd, shell=True)
+        get_cmd += f' {self.get_dir}'
+        subprocess.run(get_cmd, shell=True, 
+                       stdout=subprocess.DEVNULL, 
+                       stderr=subprocess.STDOUT)
         
         # Save list of current temporary files
         got_files = []
         for ff in self.gs_files_batch:
-            got_files.append(path.join(get_dir, path.basename(ff)))
+            got_files.append(path.join(self.get_dir, path.basename(ff)))
             
         self.tmp_files = self.tmp_files + got_files
         
-    def put_batch(self, put_dir):  
+    def put_batch(self):  
         # Create get command using gsutil and run from command line
         put_cmd = 'gsutil -m cp '
         for ff in self.gs_files_batch:
             put_cmd = put_cmd + f' {ff}'
-        put_cmd += f' {get_dir}'
-        print(put_cmd)
-        subprocess.run(put_cmd, shell=True)
+        put_cmd += f' {self.put_dir}'
+        subprocess.run(put_cmd, shell=True, stdout=subprocess.DEVNULL, 
+                                stderr=subprocess.STDOUT)
     
     def set_batch_size(self, batch_size):
         
@@ -120,8 +125,12 @@ class Gsbatch():
             return False
         
     def delete_tmp_files(self):
-        for ff in self.tmp_files:
-            os.remove(ff)
+        tmp_files = self.tmp_files
+        for ff in tmp_files:
+            try:
+                os.remove(ff)
+            except:
+                pass
         self.tmp_files = []
             
     def delete_batch_files(self):
@@ -177,7 +186,6 @@ class Gsbatch():
     def _gsls(self, path):
         
         cmd = f"gsutil ls {path}"
-        print(cmd)
         output = subprocess.check_output(cmd, shell=True)
         output = str(output)[2:-1]
         
@@ -195,7 +203,7 @@ class Gsbatch():
         
         return output_split
     
-    def _expand_wildcards(self, list_of_paths, search):
+    def _expand_wildcards(self, list_of_paths, source):
         
         output_list = []
         n_str = len(list_of_paths)
@@ -203,9 +211,9 @@ class Gsbatch():
         for ii in range(n_str):
             path = list_of_paths[ii]
             if '*' in path:
-                if search == 'remote':
+                if source == 'remote':
                     wc_files = self._gsls(path)
-                elif search == 'local':
+                elif source == 'local':
                     wc_files = glob.glob(path)
                 if type(wc_files) is not list:
                     wc_files = [wc_files]
