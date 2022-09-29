@@ -2,7 +2,7 @@
 Python classes to help with batching functions over data that is obtained
 from google buckets using gsutil. 
 
-See notebooks in /notebooks directory for example useage.
+See notebooks in /notebooks directory for example useage (view them on github).
 
 ## Setup and Requirements
 
