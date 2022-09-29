@@ -1,16 +1,15 @@
-import xarray as xr
 import subprocess
 import numpy as np
 import os
 import os.path as path
 import glob
 
-class Gsbatch():
+class CloudBatch():
     
     def __init__(self, 
-                 gs_list = None, 
-                 gs_components = None,
-                 gs_dir = None,
+                 file_list = None, 
+                 file_components = None,
+                 file_dir = None,
                  get_dir = None,
                  put_dir = None,
                  source = 'remote',
@@ -18,35 +17,35 @@ class Gsbatch():
                 ):
 
         # Define GS files
-        if gs_components is not None:
-            n_components = len(gs_components)
-            gs_files = self._make_files_from_components(gs_components)
-        elif gs_list is not None:
-            if type(gs_list) is str:
-                gs_list = [gs_list]
-            gs_files = gs_list
+        if file_components is not None:
+            n_components = len(file_components)
+            files = self._make_files_from_components(file_components)
+        elif file_list is not None:
+            if type(file_list) is str:
+                file_list = [file_list]
+            files = file_list
         else:
             raise Exception("You need to provide file_list or file_components")
             
         # Add directory to file names if wanted
-        if gs_dir is not None:
-            gs_files = [path.join(gs_dir, fn) for fn in gs_files]
+        if file_dir is not None:
+            files = [path.join(file_dir, fn) for fn in files]
             
         # Check for wildcards
-        gs_files = self._expand_wildcards(gs_files, source)
+        files = self._expand_wildcards(files, source)
         
         # Initialise batches
         self.current_file = 0
         self.current_batch = 0
         
-        n_files = len(gs_files)
+        n_files = len(files)
         
         n_batches = np.ceil( n_files / batch_size ).astype(int)
         last_batch_size = n_files % batch_size
         
         self.n_batches = n_batches
         self.n_files = n_files
-        self.gs_files = gs_files
+        self.files = files
         self.last_batch_size = last_batch_size
         self.batch_size = batch_size
         self.is_last_batch = False
@@ -85,7 +84,7 @@ class Gsbatch():
         
         # Create get command using gsutil and run from command line
         get_cmd = 'gsutil -m cp '
-        for ff in self.gs_files_batch:
+        for ff in self.files_batch:
             get_cmd = get_cmd + f' {ff}'
         get_cmd += f' {self.get_dir}'
         subprocess.run(get_cmd, shell=True, 
@@ -94,7 +93,7 @@ class Gsbatch():
         
         # Save list of current temporary files
         got_files = []
-        for ff in self.gs_files_batch:
+        for ff in self.files_batch:
             got_files.append(path.join(self.get_dir, path.basename(ff)))
             
         self.tmp_files = self.tmp_files + got_files
@@ -102,7 +101,7 @@ class Gsbatch():
     def put_batch(self):  
         # Create get command using gsutil and run from command line
         put_cmd = 'gsutil -m cp '
-        for ff in self.gs_files_batch:
+        for ff in self.files_batch:
             put_cmd = put_cmd + f' {ff}'
         put_cmd += f' {self.put_dir}'
         subprocess.run(put_cmd, shell=True, stdout=subprocess.DEVNULL, 
@@ -134,9 +133,9 @@ class Gsbatch():
         self.tmp_files = []
             
     def delete_batch_files(self):
-        for ff in self.gs_files_batch:
+        for ff in self.files_batch:
             os.remove(ff)
-        self.gs_files_batch = []
+        self.files_batch = []
         
     def summary(self):
         out_str = ''
@@ -154,7 +153,7 @@ class Gsbatch():
         else:
             end_idx = self.current_file + self.last_batch_size
         
-        self.gs_files_batch = self.gs_files[start_idx:end_idx]
+        self.files_batch = self.files[start_idx:end_idx]
     
     def _make_files_from_components(self, components):
         

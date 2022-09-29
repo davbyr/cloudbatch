@@ -1,3 +1,4 @@
+dist/
 .ipynb*
 *egg*
 *pycache*

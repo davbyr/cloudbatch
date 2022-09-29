@@ -1,6 +1,6 @@
 import numpy as np
 
-class gsbatch_apply():
+class CloudBatch_apply():
     
     def __init__(self, func, batch, 
                  verbosity = 0,
@@ -13,7 +13,7 @@ class gsbatch_apply():
         n_args = len(batch)
 
         if verbosity > 0:
-            print(f"  Applying function {func.__name__} to {n_args} gsbatch object.")
+            print(f"  Applying function {func.__name__} to {n_args} cloudbatch object.")
             print("")
 
         # Reset all batches
@@ -22,7 +22,7 @@ class gsbatch_apply():
 
         # Check number of batches are aligned
         if not np.all( [bb.n_batches for bb in batch] ):
-            raise Exception("n_batches does not match between input gsbatch objects.")
+            raise Exception("n_batches does not match between input cloudbatch objects.")
                       
         batch_size = batch[0].batch_size
         n_batches = batch[0].n_batches
@@ -36,7 +36,7 @@ class gsbatch_apply():
         n_puts = np.sum(put_bool)
         
         if n_gets == 0 and n_puts == 0:
-            raise Exception(" You are not getting or putting any data so why use gsbatch? ")
+            raise Exception(" You are not getting or putting any data so why use cloudbatch? ")
 
         # Now start the cycle of going through batches and passing to the function
         all_out = []
@@ -48,7 +48,7 @@ class gsbatch_apply():
             # Download the data if source is remote
             if n_gets > 0:
                 if verbosity == 2: 
-                    print(f"      --> Getting data from {n_gets} gsbatch objects.")
+                    print(f"      --> Getting data from {n_gets} cloudbatch objects.")
                 [bt.get_batch() for bt in batch if bt.source == 'remote']
 
             if pass_args == 'one':
@@ -65,7 +65,7 @@ class gsbatch_apply():
             
             # Upload the data if source is local
             if n_puts > 0:
-                if verbosity == 2: print(f"      --> Uploading data to {n_puts} gsbatch objects.")
+                if verbosity == 2: print(f"      --> Uploading data to {n_puts} cloudbatch objects.")
                 [bt.put_batch() for bt in batch if bt.source == 'local']
                 
             # Delete any downloaded files
@@ -96,7 +96,7 @@ class gsbatch_apply():
                 if bb.source == 'remote':
                     batch_files.append(bb.tmp_files)
                 else:
-                    batch_files.append(bb.gs_files_batch)
+                    batch_files.append(bb.files_batch)
                     
             n_files = len(batch_files[0])
             n_args = len(batch)
