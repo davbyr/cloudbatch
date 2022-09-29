@@ -2,8 +2,13 @@
 Python classes to help with batching functions over data that is obtained
 from google buckets using gsutil. 
 
-See gsbatch_tutorial_notebook for example useage.
+See notebooks in /notebooks directory for example useage.
 
 ## Setup and Requirements
 
+You can install the latest version quickly by using:
+
+```
+pip install cloudbatch
+```
 
