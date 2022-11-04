@@ -1,11 +1,32 @@
 import numpy as np
 
-class CloudBatch_apply():
+class apply_batch_func():
+    '''
+    Apply a function to files in batches.
+    
+    See __init__() for more details of input arguments.
+    
+    This class takes a bespoke function, which itself takes
+    filepaths as arguments. You then provide a list of cloudbatch objects.
+    Files will then be downloaded or copied in batches (for batches
+    with source='remote'). These files will then be passed to your function.
+    After this, for any batches where source='local', put_dir() will be called.
+    
+    Example Useage
+    
+    
+    '''
     
     def __init__(self, func, batch, 
                  verbosity = 0,
                  pass_args = "one",
                  delete_put_files = False):
+        '''
+        func is a bespoke analysis function that should take a filename
+        (or multiple file names) as input
+         
+        OUTPUTS
+        '''
 
         if type(batch) is not list:
             batch = [batch]
@@ -41,21 +62,23 @@ class CloudBatch_apply():
         # Now start the cycle of going through batches and passing to the function
         all_out = []
         for bb in range(n_batches):
+            percent_done = bb / n_batches * 100
+            print(f"Progress: {percent_done}% ", end='\r')
 
-            if verbosity == 1:
+            if verbosity >= 1:
                 print(f"   --> Processing batch: {batch[0].current_batch + 1} / {batch[0].n_batches}")
                 
             # Download the data if source is remote
             if n_gets > 0:
-                if verbosity == 2: 
+                if verbosity >= 2: 
                     print(f"      --> Getting data from {n_gets} cloudbatch objects.")
                 [bt.get_batch() for bt in batch if bt.source == 'remote']
 
             if pass_args == 'one':
-                if verbosity ==2: print(f"      --> Applying function one file at a time.")
+                if verbosity >=2: print(f"      --> Applying function one file at a time.")
                 batch_out = self._apply_one_at_a_time(func, batch)
             elif pass_args == 'all':
-                if verbosity ==2: print(f"      --> Applying function to all files in batch.")
+                if verbosity >=2: print(f"      --> Applying function to all files in batch.")
                 batch_out = self._apply_all_at_once(func, batch)
             else:
                 raise Exception("Unrecognised pass option. Choose: pass_args = ['one','all']")
@@ -73,7 +96,7 @@ class CloudBatch_apply():
             
             for bt in batch:
                 if delete_put_files and bt.source == 'local':
-                    bt.delete_batch_files()
+                    bt.delete_tmp_files( bt.files_batch )
                 
             
             # Cycle up batches

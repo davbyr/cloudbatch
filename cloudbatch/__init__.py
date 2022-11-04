@@ -1,2 +1,5 @@
 from .cloudbatch import CloudBatch
-from .cloudbatch_apply import CloudBatch_apply
+from .gsbatch import GSBatch
+from .localbatch import LocalBatch
+from .cdsbatch import CDSBatch
+from .apply_batch_func import apply_batch_func
