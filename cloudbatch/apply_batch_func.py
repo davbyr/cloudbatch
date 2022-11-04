@@ -107,33 +107,27 @@ class apply_batch_func():
                  
 
     def _apply_one_at_a_time(self, func, batch):
+        ''' Apply a function to files in a list of batches, one file
+        at a time '''
         
         # Get files differently depending on source
         output = []
-
-        # Handle slightly differently if more than one batch vs one batch
-        if len(batch) > 1:
             
-            batch_files = []
-            for bb in batch:
-                if bb.source == 'remote':
-                    batch_files.append(bb.tmp_files)
-                else:
-                    batch_files.append(bb.files_batch)
-                    
-            n_files = len(batch_files[0])
-            n_args = len(batch)
+        batch_files = []
+        for bb in batch:
+            if bb.source == 'remote':
+                batch_files.append(bb.tmp_files)
+            else:
+                batch_files.append(bb.files_batch)
 
-            for ff in range(n_files):
-                # Make list of input files
-                args = [batch_files[ii][ff] for ii in range(n_args)]
-                output.append( func(*args) )
-        else:
-            tmp_files = batch[0].tmp_files
-            for ff in range(n_files):
-                output.append( func( batch_files[ff] ) )
-        
-        
+        n_files = len(batch_files[0])
+        n_args = len(batch)
+
+        for ff in range(n_files):
+            # Make list of input files
+            args = [batch_files[ii][ff] for ii in range(n_args)]
+            output.append( func(*args) )
+
         return output
 
     def _apply_all_at_once(self, func, batch):
